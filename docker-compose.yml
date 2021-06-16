@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+    elk:
+        build: .
+        volumes:
+            - ./:/keysteal
+
+        # https://stackoverflow.com/a/39150040
+        stdin_open: true
+        tty: true
+        entrypoint: /bin/bash
