@@ -13,9 +13,6 @@ var rootCmd = &cobra.Command{
 	Long: `Decrypt secrets from Elasticsearch, Kibana, Logstash, and Beats keystores, which can provide sensitive information.
 
 Source available at https://github.com/captainGeech42/keysteal`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Println("hello from root Run()")
-	},
 }
 
 func Execute() {

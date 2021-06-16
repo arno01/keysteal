@@ -21,4 +21,9 @@ RUN apt-get install -qq -y \
     logstash \
     filebeat
 
+# install Go tool chain
+RUN wget -q https://golang.org/dl/go1.16.5.linux-amd64.tar.gz -O /tmp/go.tar.gz
+RUN tar -C /usr/local -xzf /tmp/go.tar.gz
+ENV PATH="${PATH}:/usr/local/go/bin"
+
 CMD "/bin/bash"

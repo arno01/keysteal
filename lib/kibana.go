@@ -28,37 +28,37 @@ type KibanaKeystore struct {
 	Key  []byte
 }
 
-func (k *KibanaKeystore) DecryptKeystore() (map[string]string, error) {
+func (k *KibanaKeystore) DecryptKeystore() error {
 	f, err := os.Open(k.Path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	keystoreBytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// parse out the version number
 	splitSlice := strings.Split(string(keystoreBytes), ":")
 	if len(splitSlice) != 2 {
-		return nil, errors.New("invalid keystore format")
+		return errors.New("invalid keystore format")
 	}
 
 	versionNumber, err := strconv.Atoi(splitSlice[0])
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// there is only one kibana keystore version as nof now
 	if versionNumber != 1 {
-		return nil, fmt.Errorf("invalid version number in keystore: %d", versionNumber)
+		return fmt.Errorf("invalid version number in keystore: %d", versionNumber)
 	}
 
 	// base64 decode the buffer
 	keystoreDataBytes, err := base64.StdEncoding.DecodeString(splitSlice[1])
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// set values
@@ -71,26 +71,52 @@ func (k *KibanaKeystore) DecryptKeystore() (map[string]string, error) {
 	key := pbkdf2.Key([]byte(k.Password), k.Salt, 10000, 32, sha512.New)
 
 	// decrypt
-	// https://gist.github.com/kkirsche/e28da6754c39d5e7ea10
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	plaintext, err := gcm.Open(nil, k.IV, append(text, k.Tag...), nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = json.Unmarshal(plaintext, &k.Contents)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return k.Contents, nil
+	return nil
+}
+
+func (k *KibanaKeystore) DefaultPaths() []string {
+	return []string{"/etc/kibana/kibana.keystore"}
+}
+
+func (k *KibanaKeystore) GetContents() map[string]string {
+	return k.Contents
+}
+
+func (k *KibanaKeystore) Name() string {
+	return "Kibana"
+}
+
+func (k *KibanaKeystore) SetPath(path string) {
+	k.Path = path
+}
+
+func (k *KibanaKeystore) FindPassword() bool {
+	// even though the keystore code in Kibana supports passwords,
+	// it was never implemented in the rest of Kibana (as of 7.13)
+
+	return true
+}
+
+func (k *KibanaKeystore) SetPassword(password string) {
+	k.Password = password
 }

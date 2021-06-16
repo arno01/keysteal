@@ -11,7 +11,7 @@ import (
 var keystorePath string
 
 func init() {
-	KibanaCmd.Flags().StringVarP(&keystorePath, "path", "p", "/etc/kibana/kibana.keystore", "Path to the Kibana keystore")
+	KibanaCmd.Flags().StringVarP(&keystorePath, "path", "p", "", "Path to the Kibana keystore")
 	rootCmd.AddCommand(KibanaCmd)
 }
 
@@ -19,16 +19,27 @@ var KibanaCmd = &cobra.Command{
 	Use:   "kibana",
 	Short: "Decrypts the kibana keystore",
 	Run: func(cmd *cobra.Command, args []string) {
-		k := &lib.KibanaKeystore{
-			Path: keystorePath,
+		k := &lib.KibanaKeystore{}
+
+		// get path
+		possiblePaths := append([]string{keystorePath}, k.DefaultPaths()...)
+		path := lib.KeystoreExists(possiblePaths)
+		if path == "" {
+			fmt.Printf("failed to find Kibana keystore at these paths: %v\n", possiblePaths)
+			return
 		}
 
-		contents, err := k.DecryptKeystore()
+		fmt.Printf("found a keystore at %s\n", path)
+		k.Path = path
+
+		// decrypt
+		err := k.DecryptKeystore()
 		if err != nil {
 			panic(err)
 		}
 
+		// print the keystore
 		fmt.Println("=== Kibana keystore values ===")
-		lib.PrintKeystoreContents(contents)
+		lib.PrintKeystoreContents(k.GetContents())
 	},
 }
