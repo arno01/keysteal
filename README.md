@@ -1,4 +1,7 @@
 # keysteal
+
+**Still being actively developed, docs will improve soon**
+
 Red team tool for decrypting Elastic keystores
 
 Currently supports:
