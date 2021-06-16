@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/captainGeech42/keysteal/lib"
@@ -21,9 +23,12 @@ var KibanaCmd = &cobra.Command{
 			Path: keystorePath,
 		}
 
-		err := k.DecryptKeystore()
+		contents, err := k.DecryptKeystore()
 		if err != nil {
 			panic(err)
 		}
+
+		fmt.Println("=== Kibana keystore values ===")
+		lib.PrintKeystoreContents(contents)
 	},
 }
