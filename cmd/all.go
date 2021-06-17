@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/captainGeech42/keysteal/lib"
+	"github.com/captainGeech42/keysteal/internal/keystore"
 )
 
 func init() {
@@ -16,14 +16,14 @@ var AllCmd = &cobra.Command{
 	Use:   "all",
 	Short: "Decrypts all keystores available",
 	Run: func(cmd *cobra.Command, args []string) {
-		keystores := []lib.Keystore{
-			&lib.KibanaKeystore{},
+		keystores := []keystore.Keystore{
+			&keystore.KibanaKeystore{},
 		}
 
 		for _, k := range keystores {
 			// get path
-			possiblePaths := append([]string{keystorePath}, k.DefaultPaths()...)
-			path := lib.KeystoreExists(possiblePaths)
+			possiblePaths := k.DefaultPaths()
+			path := keystore.KeystoreExists(possiblePaths)
 			if path == "" {
 				fmt.Printf("failed to find %s keystore at these paths: %v\n", k.Name(), possiblePaths)
 				return
@@ -40,7 +40,7 @@ var AllCmd = &cobra.Command{
 
 			// print the keystore
 			fmt.Printf("=== %s keystore values ===\n", k.Name())
-			lib.PrintKeystoreContents(k.GetContents())
+			keystore.PrintKeystoreContents(k.GetContents())
 		}
 	},
 }
