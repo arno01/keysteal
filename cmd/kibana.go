@@ -8,8 +8,6 @@ import (
 	"github.com/captainGeech42/keysteal/internal/keystore"
 )
 
-var keystorePath string
-
 func init() {
 	KibanaCmd.Flags().StringVarP(&keystorePath, "path", "p", "", "Path to the Kibana keystore")
 	rootCmd.AddCommand(KibanaCmd)
@@ -17,7 +15,7 @@ func init() {
 
 var KibanaCmd = &cobra.Command{
 	Use:   "kibana",
-	Short: "Decrypts the kibana keystore",
+	Short: "Decrypts the Kibana keystore",
 	Run: func(cmd *cobra.Command, args []string) {
 		k := &keystore.KibanaKeystore{}
 

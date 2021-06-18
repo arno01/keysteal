@@ -33,6 +33,7 @@ func (k *KibanaKeystore) DecryptKeystore() error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	keystoreBytes, err := ioutil.ReadAll(f)
 	if err != nil {
