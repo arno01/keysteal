@@ -6,6 +6,7 @@ package lucene
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -27,10 +28,10 @@ func ReadByte(in *os.File) (byte, error) {
 
 // FROM HERE DOWN IS FROM CodecUtil.java, commit b84e0c272b
 
-var CODEC_MAGIC int = 0x3fd76c17
-var FOOTER_MAGIC int = ^CODEC_MAGIC
+var CODEC_MAGIC int32 = 0x3fd76c17
+var FOOTER_MAGIC int32 = ^CODEC_MAGIC
 
-func CheckHeader(in *os.File, codec string, minVersion int, maxVersion int) (int, error) {
+func CheckHeader(in *os.File, codec string, minVersion int32, maxVersion int32) (int32, error) {
 	codecHeaderInt, err := ReadBEInt(in)
 	if err != nil {
 		return 0, err
@@ -43,7 +44,7 @@ func CheckHeader(in *os.File, codec string, minVersion int, maxVersion int) (int
 	return CheckHeaderNoMagic(in, codec, minVersion, maxVersion)
 }
 
-func CheckHeaderNoMagic(in *os.File, codec string, minVersion int, maxVersion int) (int, error) {
+func CheckHeaderNoMagic(in *os.File, codec string, minVersion int32, maxVersion int32) (int32, error) {
 	actualCodec, err := ReadString(in)
 	if err != nil {
 		return 0, err
@@ -69,8 +70,41 @@ func CheckHeaderNoMagic(in *os.File, codec string, minVersion int, maxVersion in
 	return actualVersion, nil
 }
 
+// returns nil if all good
+func CheckFooter(in *os.File) error {
+	// a CRC32 is calculated and updated as bytes are read from the file
+	// however, i am lazy
+	// TODO check CRC32
+
+	// real code does file length checks and such, but again, i am lazy
+	// just make sure the footer is there, and error out if not
+
+	footer, err := ReadBEInt(in)
+	if err != nil {
+		return err
+	}
+
+	if footer != FOOTER_MAGIC {
+		return fmt.Errorf("got a bad footer magic value: %#x (expcted %#x)", footer, uint64(FOOTER_MAGIC))
+	}
+
+	algo, err := ReadBEInt(in)
+	if err != nil {
+		return err
+	}
+
+	if algo != 0 {
+		return fmt.Errorf("got a bad algo value: %#x", algo)
+	}
+
+	// this is where crc32 code would go
+	// there should only be 8 bytes left in the file
+
+	return nil
+}
+
 // read a big endian 32bit int from the provided file
-func ReadBEInt(in *os.File) (int, error) {
+func ReadBEInt(in *os.File) (int32, error) {
 	byteArr := make([]byte, 4)
 
 	n, err := in.Read(byteArr)
@@ -84,7 +118,7 @@ func ReadBEInt(in *os.File) (int, error) {
 
 	intVal := binary.BigEndian.Uint32(byteArr)
 
-	return int(intVal), nil
+	return int32(intVal), nil
 }
 
 // FROM HERE DOWN IS FROM DataInput.java, commit b84e0c272b
@@ -128,4 +162,33 @@ func ReadVInt(in *os.File) (int, error) {
 	}
 
 	return i, nil
+}
+
+func ReadMapOfStrings(in *os.File) (map[string]string, error) {
+	count, err := ReadVInt(in)
+	if err != nil {
+		return nil, err
+	}
+
+	if count == 0 {
+		return map[string]string{}, nil
+	} else {
+		m := make(map[string]string)
+
+		for i := 0; i < count; i++ {
+			key, err := ReadString(in)
+			if err != nil {
+				return nil, err
+			}
+
+			val, err := ReadString(in)
+			if err != nil {
+				return nil, err
+			}
+
+			m[key] = val
+		}
+
+		return m, nil
+	}
 }
