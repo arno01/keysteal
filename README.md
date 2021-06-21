@@ -6,7 +6,7 @@ Red team tool for decrypting Elastic keystores
 
 Currently supports:
 
-- [ ] Elasticsearch
+- [x] Elasticsearch
 - [x] Kibana
 - [ ] Logstash
 - [ ] Filebeat
